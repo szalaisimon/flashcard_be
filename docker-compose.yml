@@ -1,0 +1,39 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: flashcard-db
+    environment:
+      POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME}
+      POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres-flashcard-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - flashcard-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: flashcard-redis
+    ports:
+      - "127.0.0.1:${SPRING_DATA_REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - flashcard-network
+
+networks:
+  flashcard-network:
+    driver: bridge
+
+volumes:
+  postgres-flashcard-data:
